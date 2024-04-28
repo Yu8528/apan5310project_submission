@@ -35,3 +35,407 @@ cur.execute('SELECT version()')
 
 db_version = cur.fetchone()
 print(db_version)
+# Test the Connection
+print('PostgreSQL database version:')
+cur.execute('SELECT version()')
+
+db_version = cur.fetchone()
+print(db_version)
+
+stmt = """
+
+DROP TABLE  Staffing CASCADE;
+DROP TABLE   Staff_Shift CASCADE;
+DROP TABLE   store CASCADE;
+DROP TABLE   Store_Expenses CASCADE;
+DROP TABLE   category CASCADE;
+DROP TABLE   category_placement CASCADE;
+DROP TABLE   product CASCADE;
+DROP TABLE   vendor CASCADE;
+DROP TABLE   customer CASCADE;
+DROP TABLE   customer_sales CASCADE;
+DROP TABLE   customer_store_feedback CASCADE;
+
+CREATE TABLE Staffing(
+    staff_id     INT,
+    staff_name   VARCHAR(50) NOT NULL,
+    manager_name VARCHAR(50) NOT NULL,
+    email        VARCHAR(100) NOT NULL,
+    station      VARCHAR(30) NOT NULL,
+    PRIMARY KEY (staff_id)
+);
+
+
+CREATE TABLE store (
+    store_id                 INT PRIMARY KEY,
+    store_name               VARCHAR(255),
+    store_street             VARCHAR(255),
+    store_city               VARCHAR(255),
+    store_state              VARCHAR(255),
+    store_zipcode            VARCHAR(255),
+    store_manager            VARCHAR(50) NOT NULL,
+    store_open_date          DATE,
+    store_parking_capacity   INT
+);
+
+CREATE TABLE Staff_Shift(
+    staff_id         INT,
+    date_of_Hire    TIMESTAMP NOT NULL,
+    shift_Start      TIMESTAMP NOT NULL,
+    shift_End        TIMESTAMP NOT NULL,
+    hourly_pay_rate  NUMERIC(4,2) NOT NULL,
+    store_name       VARCHAR(255),
+    store_id         INT,
+    PRIMARY KEY (staff_id),
+    FOREIGN KEY (staff_id) REFERENCES Staffing(staff_id),
+    FOREIGN KEY (store_id) REFERENCES store(store_id)
+);
+
+CREATE TABLE Store_Expenses (
+    store_id                 INT,
+    expense_date             DATE NOT NULL,
+    expense_type             VARCHAR(50) NOT NULL,
+    expense_amount           NUMERIC(9,2) NOT NULL,
+    expense_description      TEXT,
+    PRIMARY KEY (store_id, expense_date, expense_type),
+    FOREIGN KEY (store_id) REFERENCES store(store_id)
+);
+
+CREATE TABLE category (
+    category_id   INT PRIMARY KEY,
+    category_name VARCHAR(50)
+);
+
+
+CREATE TABLE category_placement (
+    placement_id INT PRIMARY KEY,
+    store_id     INT,
+    store_name   VARCHAR(200),
+    category_id  INT,
+    aisle        VARCHAR(10),
+    shelf_number VARCHAR(10),
+    turnover_rate NUMERIC(6,2),
+    FOREIGN KEY (store_id) REFERENCES store(store_id),
+    FOREIGN KEY (category_id) REFERENCES category(category_id)
+);
+
+CREATE TABLE product (
+    product_id VARCHAR PRIMARY KEY,
+    product_name VARCHAR,
+    product_description TEXT,
+    category_id INT,
+    category VARCHAR,
+    unit VARCHAR,
+    price_per_unit NUMERIC,
+    FOREIGN KEY (category_id) REFERENCES category(category_id)
+);
+
+
+CREATE TABLE vendor (
+   vendor_id           SERIAL PRIMARY KEY,
+   product_id          VARCHAR,
+   vendor_Email        VARCHAR(100) NOT NULL,
+   order_Number        VARCHAR(100) NOT NULL,
+   store_id            INT NOT NULL,
+   delivery_date     DATE NOT NULL,
+   quantity            INT NOT NULL,
+   expiration_date   DATE,
+   FOREIGN KEY (product_id) REFERENCES Product(product_id),
+   FOREIGN KEY (store_id) REFERENCES store(store_id)
+);
+
+CREATE TABLE customer(
+    customer_id      INT PRIMARY KEY,
+    customer_name    VARCHAR(50) NOT NULL,
+    customer_email   VARCHAR(100) NOT NULL
+);
+
+CREATE TABLE customer_sales(
+    customer_id      INT PRIMARY KEY,
+    store_id            INT NOT NULL,
+    date_purchase    DATE NOT NULL,
+    product_id       VARCHAR,
+    quantity         INT NOT NULL,
+    price_per_unit   NUMERIC(6,2) NOT NULL,
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id),
+    FOREIGN KEY (product_id) REFERENCES product(product_id),
+    FOREIGN KEY (store_id) REFERENCES store(store_id)
+);
+
+CREATE TABLE customer_store_feedback (
+    feedback_id      INT PRIMARY KEY,
+    customer_id      INT,
+    store_id         INT,
+    rating           INT,  -- Scale of 1-10
+    FOREIGN KEY (customer_id) REFERENCES customer(customer_id),
+    FOREIGN KEY (store_id) REFERENCES store(store_id)
+);
+
+
+ALTER TABLE store ADD UNIQUE (store_name, store_street);
+ALTER TABLE customer_sales
+ADD CONSTRAINT unique_customer_product UNIQUE (customer_id, product_id);
+ALTER TABLE customer_sales DROP CONSTRAINT customer_sales_pkey;
+ALTER TABLE customer_sales ADD PRIMARY KEY (customer_id, product_id);
+   """
+cur.execute(stmt)
+conn.commit()
+insert data
+staff
+import pandas as pd
+employees_shifts['staff_id'] = range(1, 1 + len(employees_shifts))
+columns = employees_shifts.columns.tolist()
+columns.remove('staff_id')
+new_columns = ['staff_id'] + columns
+employees_shifts = employees_shifts[new_columns]
+employees_shifts.rename(columns={
+    'Employee Name': 'staff_name',
+    'Manager Name': 'manager_name',
+    'Email': 'email',
+    'Date of Hire': 'date_of_hire',
+    'Store': 'store_name',
+    'Shift Start': 'shift_start',
+    'Shift End': 'shift_end',
+    'Station': 'station',
+    'Hourly Pay Rate': 'hourly_pay_rate'
+}, inplace=True)
+employees_shifts.head()
+
+insert_query = """
+    INSERT INTO staffing (staff_id, staff_name, manager_name, email, station)
+    VALUES (%s, %s, %s, %s, %s)
+    ON CONFLICT (staff_id) DO NOTHING;
+"""
+
+for index, row in employees_shifts.iterrows():
+    cur.execute(insert_query, (row['staff_id'], row['staff_name'], row['manager_name'], row['email'], row['station']))
+conn.commit()
+pd.read_sql_query("SELECT * FROM Staffing LIMIT 5;", engine)
+
+## store
+stores.head()
+import pandas as pd
+df_stores = pd.DataFrame(stores)
+df_stores['store_id'] = pd.factorize(df_stores['store_name'])[0] + 1 
+columns = df_stores.columns.tolist()
+columns.remove('store_id')
+new_columns = ['store_id'] + columns
+df_stores = df_stores[new_columns]
+df_stores.head()
+insert_query = """
+    INSERT INTO store (store_id, store_name, store_street, store_city, store_state, store_zipcode, store_manager, store_open_date, store_parking_capacity)
+    VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s)
+    ON CONFLICT (store_name, store_street) DO NOTHING;
+"""
+for index, row in df_stores.iterrows():
+    cur.execute(insert_query, (row['store_id'], row['store_name'], row['store_street'], row['store_city'], row['store_state'], row['store_zipcode'], row['store_manager'], row['store_open_date'], row['store_parking_capacity']))
+
+conn.commit()
+pd.read_sql_query("SELECT * FROM store LIMIT 5;", engine)
+#Staff_Shift
+employees_shifts['date_of_hire'] = pd.to_datetime(employees_shifts['date_of_hire'])
+employees_shifts['shift_start'] = pd.to_datetime(employees_shifts['shift_start'])
+employees_shifts['shift_end'] = pd.to_datetime(employees_shifts['shift_end'])
+employees_shifts.head()
+df_stores_2 = df_stores[['store_id', 'store_name']]
+df_stores_3 = df_stores_2.drop_duplicates(subset=['store_name'], keep='first')
+staff_shift = employees_shifts.merge(df_stores_3, on='store_name', how='inner')
+staff_shift.head()
+insert_query = """
+    INSERT INTO Staff_Shift (staff_id, date_of_hire,store_name,shift_start, shift_end, hourly_pay_rate,store_id)
+    VALUES (%s, %s, %s, %s, %s,%s,%s)
+    ON CONFLICT (staff_id) DO NOTHING;
+"""
+
+for index, row in staff_shift.iterrows():
+    cur.execute(insert_query, (row['staff_id'], row['date_of_hire'],row['store_name'],row['shift_start'], row['shift_end'], row['hourly_pay_rate'], row['store_id']))
+
+conn.commit()
+pd.read_sql_query("SELECT * FROM Staff_Shift LIMIT 5;", engine)
+## Store_Expenses
+df.rename(columns={
+    'store_expense_date': 'expense_date',
+    'store_expense_type': 'expense_type',
+    'store_expense_amount': 'expense_amount',
+    'store_expense_description': 'expense_description',
+}, inplace=True)
+insert_query = """
+    INSERT INTO Store_Expenses (store_id, expense_date, expense_type, expense_amount, expense_description)
+    VALUES (%s, %s, %s, %s, %s)
+"""
+for index, row in df.iterrows():
+    cur.execute(insert_query, (row['store_id'], row['expense_date'], row['expense_type'], row['expense_amount'], row['expense_description']))
+
+conn.commit()
+pd.read_sql_query("SELECT * FROM Store_Expenses LIMIT 5;", engine)
+insert_query = """
+    INSERT INTO category (category_id, category_name)
+    VALUES (%s, %s)
+"""
+for index, row in category.iterrows():
+    cur.execute(insert_query, (row['category_id'], row['category_name']))
+
+conn.commit()
+pd.read_sql_query("SELECT * FROM category LIMIT 5;", engine)
+## category_placement
+category_placement.head()
+insert_query = """
+    INSERT INTO category_placement (placement_id, store_id,store_name,category_id,aisle,shelf_number,turnover_rate)
+    VALUES (%s, %s,%s,%s,%s,%s,%s)
+"""
+for index, row in category_placement.iterrows():
+    cur.execute(insert_query, (row['placement_id'], row['store_id'],row['store_name'],row['category_id'],row['aisle'],row['shelf_number'],row['turnover_rate']))
+
+conn.commit()
+pd.read_sql_query("SELECT * FROM category_placement LIMIT 5;", engine)
+## product
+product_vendor_orders.head()
+df_product = product_vendor_orders.rename(columns={
+    'Vendor Name': 'vendor_name',
+    'Store Name':'store_name',
+    'Product Name': 'product_name',
+    'Product Description': 'product_description',
+    'Category': 'category',
+    'Unit of Measurement': 'unit',
+    'Price per Unit': 'price_per_unit',
+     'Vendor Email': 'vendor_email',
+    'Order Number': 'order_number',
+    'Delivery Date': 'delivery_date',
+    'Quantity': 'quantity',
+    'Expiration Date': 'expiration_date'
+})
+df_product.head()
+len(df_product.index)
+df_category = category.rename(columns={
+    'category_name':'category'
+    })
+df_product = df_product.merge(df_category, on='category', how='inner')
+import hashlib
+def create_unique_id(row):
+    hash_object = hashlib.sha256()
+    unique_string = (row['product_name'] + row['product_description'] + row['category']).encode()
+    hash_object.update(unique_string)
+    return hash_object.hexdigest()[:8] 
+
+df_product['product_id'] = df_product.apply(create_unique_id, axis=1)
+
+print(df_product[['product_name', 'category', 'product_description', 'product_id']])
+print("Consistency Check:", df_product['product_id'].duplicated().any())
+insert_query = """
+    INSERT INTO product (product_id, product_name, product_description,category_id,category, unit, price_per_unit)
+    VALUES (%s, %s, %s, %s, %s, %s, %s)
+    ON CONFLICT (product_id) DO NOTHING;
+"""
+for index, row in df_product.iterrows():
+    cur.execute(insert_query, (row['product_id'], row['product_name'], row['product_description'],  row['category_id'],row['category'], row['unit'], row['price_per_unit']))
+
+conn.commit()
+pd.read_sql_query("SELECT * FROM product LIMIT 5;", engine)
+## vendor
+df_product.head()
+import pandas as pd
+vendor_ids, unique_vendors = pd.factorize(df_product['vendor_email'])
+df_product['vendor_id'] = vendor_ids + 1
+print(df_product[['vendor_email', 'vendor_id']])
+df_product.head()
+len(df_vendor.index)
+df_stores_2 = df_stores[['store_id', 'store_name']]
+df_stores_3 = df_stores_2.drop_duplicates(subset=['store_name'], keep='first')
+df_vendor = df_product.merge(df_stores_3, on='store_name', how='inner')
+df_vendor.head()
+insert_query = """
+    INSERT INTO vendor (product_id, vendor_email, order_number, store_id, delivery_date, quantity, expiration_date)
+    VALUES (%s, %s, %s, %s, %s, %s, %s);
+"""
+for index, row in df_vendor.iterrows():
+    cur.execute(insert_query, (
+        row['product_id'], 
+        row['vendor_email'], 
+        row['order_number'], 
+        row['store_id'], 
+        row['delivery_date'], 
+        row['quantity'], 
+        row['expiration_date']
+    ))
+
+conn.commit()
+pd.read_sql_query("SELECT * FROM vendor LIMIT 5;", engine)
+## customer
+customer_sales.head()
+#data cleanning
+df_customer = customer_sales.rename(columns={
+    'Customer Name': 'customer_name',
+    'Customer Email': 'customer_email',
+    'Store Name': 'store_name', 
+    'Date of Purchase': 'date_purchase',
+    'Product Name': 'product_name', 
+    'Quantity': 'quantity',
+    'Price per Unit': 'price_per_unit'
+})
+df_customer.head()
+len(df_customer.index)
+df_stores_2 = df_stores[['store_id', 'store_name']]
+df_stores_3 = df_stores_2.drop_duplicates(subset=['store_name'], keep='first')
+df_customer = df_customer.merge(df_stores_3, on='store_name', how='inner')
+df_product_2 = df_product[['product_name', 'product_id']]
+df_product_3 = df_product_2.drop_duplicates(subset=['product_name'], keep='first')
+df_customer = df_customer.merge(df_product_3, on='product_name', how='inner')
+df_customer.head()
+df_customer['customer_id'], unique_names = pd.factorize(df_customer['customer_name'])
+df_customer['customer_id'] = df_customer['customer_id'] + 1
+print(df_customer[['customer_name', 'customer_id']].head())
+df_customer['customer_id'], unique_names = pd.factorize(df_customer['customer_name'])
+df_customer['customer_id'] = df_customer['customer_id'] + 1
+print(df_customer[['customer_name', 'customer_id']].head())
+insert_query = """
+INSERT INTO customer (customer_id, customer_name, customer_email)
+VALUES (%s, %s, %s)
+ON CONFLICT (customer_id) DO NOTHING;
+"""
+for idx, row in df_customer.iterrows():
+    cur.execute(insert_query, (
+        row['customer_id'],
+        row['customer_name'],
+        row['customer_email']
+    ))
+conn.commit()
+pd.read_sql_query("SELECT * FROM customer LIMIT 5;", engine)
+## customer_sales
+insert_query = """
+INSERT INTO customer_sales (customer_id, store_id, date_purchase, product_id, quantity, price_per_unit)
+VALUES (%s, %s, %s, %s, %s, %s)
+ON CONFLICT (customer_id, product_id) DO NOTHING;
+"""
+try:
+    for idx, row in df_customer.iterrows():
+        cur.execute(insert_query, (
+            row['customer_id'],
+            row['store_id'],
+            row['date_purchase'],
+            row['product_id'],
+            row['quantity'],
+            row['price_per_unit']
+        ))
+    conn.commit()
+except Exception as e:
+    print("An error occurred:", e)
+pd.read_sql_query("SELECT * FROM customer_sales LIMIT 5;", engine)
+## customer_store_feedback
+insert_query = """
+INSERT INTO customer_store_feedback (feedback_id, customer_id, store_id, rating)
+VALUES (%s, %s, %s, %s);
+"""
+for idx, row in customer_feedback.iterrows():
+    feedback_id = int(row['feedback_id'])
+    customer_id = int(row['customer_id'])
+    store_id = int(row['store_id'])
+    rating = int(row['rating'])
+    
+    cur.execute(insert_query, (feedback_id, customer_id, store_id, rating))
+
+conn.commit()
+pd.read_sql_query("SELECT * FROM customer_store_feedback LIMIT 5;", engine)
+insert_query = """
+rollback
+"""
+conn.commit()
